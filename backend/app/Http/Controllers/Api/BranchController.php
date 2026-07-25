@@ -136,37 +136,9 @@ class BranchController extends Controller
      */
     private function initializeDatabase(Branch $branch): void
     {
-        $driver = env('DB_CONNECTION', 'sqlite');
-        if ($driver === 'sqlite') {
-            $dbPath = database_path('database_branch_' . $branch->id . '.sqlite');
-            if (!file_exists($dbPath)) {
-                touch($dbPath);
-            }
-            Config::set('database.connections.tenant.driver', 'sqlite');
-            Config::set('database.connections.tenant.database', $dbPath);
-        } else {
-            Config::set('database.connections.tenant.driver', $driver);
-            Config::set('database.connections.tenant.host', env('DB_HOST', '127.0.0.1'));
-            Config::set('database.connections.tenant.port', env('DB_PORT', '3306'));
-            Config::set('database.connections.tenant.database', env('DB_DATABASE', 'laravel') . '_branch_' . $branch->id);
-            Config::set('database.connections.tenant.username', env('DB_USERNAME', 'root'));
-            Config::set('database.connections.tenant.password', env('DB_PASSWORD', ''));
-        }
-
-        Config::set('database.connections.tenant.foreign_key_constraints', false);
-        DB::purge('tenant');
-        DB::reconnect('tenant');
-
-        try {
-            DB::connection('tenant')->statement('PRAGMA foreign_keys = OFF;');
-        } catch (\Exception $e) {}
-
-        // Run migrations
-        Artisan::call('migrate', [
-            '--database' => 'tenant',
-            '--path' => 'database/migrations',
-            '--force' => true,
-        ]);
+        // In a single-database multi-tenancy model (TenantScope), we no longer create
+        // separate databases for each branch. The central 'erp_db' is used.
+        // The tenant_id handles isolation. We just do nothing here.
     }
 
     /**
@@ -261,56 +233,17 @@ class BranchController extends Controller
     {
         $branch = Branch::findOrFail($branchId);
 
-        // Store current connection config so we can switch back
-        $originalDefault = Config::get('database.default');
-        
-        $driver = env('DB_CONNECTION', 'sqlite');
-        
-        // Dynamically point to target branch DB
-        if ($driver === 'sqlite') {
-            $dbPath = database_path('database_branch_' . $branch->id . '.sqlite');
-            if (!file_exists($dbPath)) {
-                touch($dbPath);
-            }
-            Config::set('database.connections.tenant.driver', 'sqlite');
-            Config::set('database.connections.tenant.database', $dbPath);
-        } else {
-            Config::set('database.connections.tenant.driver', $driver);
-            Config::set('database.connections.tenant.host', env('DB_HOST', '127.0.0.1'));
-            Config::set('database.connections.tenant.port', env('DB_PORT', '3306'));
-            Config::set('database.connections.tenant.database', env('DB_DATABASE', 'laravel') . '_branch_' . $branch->id);
-            Config::set('database.connections.tenant.username', env('DB_USERNAME', 'root'));
-            Config::set('database.connections.tenant.password', env('DB_PASSWORD', ''));
-        }
-
-        Config::set('database.connections.tenant.foreign_key_constraints', false);
-        Config::set('database.default', 'tenant');
-        DB::purge('tenant');
-        DB::reconnect('tenant');
-
-        try {
-            DB::connection('tenant')->statement('PRAGMA foreign_keys = OFF;');
-        } catch (\Exception $e) {}
-
-        // Check if warehouses table exists, if not initialize it
-        if (!Schema::connection('tenant')->hasTable('warehouses')) {
-            Artisan::call('migrate', [
-                '--database' => 'tenant',
-                '--path' => 'database/migrations',
-                '--force' => true,
-            ]);
-        }
-
-        $warehouses = DB::connection('tenant')->table('warehouses')
+        // In a single-database architecture, warehouses are stored centrally
+        $warehouses = DB::connection(env('DB_CONNECTION', 'mysql'))->table('warehouses')
             ->whereNull('deleted_at')
             ->where('is_active', 1)
+            // If they belong to a tenant, they are automatically filtered by TenantScope if queried via Model.
+            // Since we use DB facade here, we should ideally filter by tenant_id if applicable.
+            // But if there's no tenant_id here in the scope, it will return all active warehouses for the system/tenant.
+            // Assuming tenant_id is available on the branch's company (for SaaS).
+            ->where('tenant_id', $branch->company_id)
             ->orderBy('name')
             ->get(['id', 'name', 'location']);
-
-        // Switch back to original connection
-        Config::set('database.default', $originalDefault);
-        DB::purge($originalDefault);
-        DB::reconnect($originalDefault);
 
         return $this->successResponse($warehouses, 'Warehouses retrieved for branch.');
     }

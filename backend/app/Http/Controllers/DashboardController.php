@@ -20,6 +20,36 @@ class DashboardController extends Controller
      */
     public function index(): JsonResponse
     {
+        // If no branch database is active, return empty dashboard
+        if (config('database.default') !== 'tenant') {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'kpi' => [
+                        'total_active_projects' => 0,
+                        'projects_completed' => 0,
+                        'projects_in_progress' => 0,
+                        'materials_in_stock' => 0,
+                        'materials_dispatched_today' => ['count' => 0, 'cost' => 0],
+                        'pending_quotations' => 0,
+                        'pending_invoices' => 0,
+                        'purchase_orders_pending' => 0,
+                        'monthly_revenue' => 0,
+                    ],
+                    'charts' => [
+                        'revenue' => [], 'project_status' => [], 'purchases' => [], 'material_consumption' => [],
+                        'site_wise_progress' => [], 'material_cost_vs_budget' => []
+                    ],
+                    'lists' => [
+                        'recent_activities' => [], 'recent_quotations' => [], 'recent_purchases' => [], 'recent_dispatches' => []
+                    ],
+                    'notifications' => [
+                        ['id' => 'no_branch', 'type' => 'warning', 'message' => 'No active branch selected. Please select or create a branch.']
+                    ]
+                ]
+            ]);
+        }
+
         // 1. KPI counters
         $totalActiveProjects = Project::whereIn('status', ['active', 'in_progress'])->count();
         $projectsCompleted = Project::where('status', 'completed')->count();

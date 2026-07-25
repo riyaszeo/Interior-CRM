@@ -242,18 +242,6 @@ export const AuthPages: React.FC = () => {
                 >
                   {loading ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
                 </Button>
-
-                <Box sx={{ mt: 1, textAlign: 'center', bgcolor: 'rgba(255,255,255,0.02)', p: 1.5, borderRadius: 2, border: '1px solid rgba(255,255,255,0.03)' }}>
-                  <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5, fontWeight: 700 }}>
-                    Demo Credentials:
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'primary.light', display: 'block', fontFamily: 'monospace' }}>
-                    superadmin@interior.com / password123
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'primary.light', display: 'block', fontFamily: 'monospace' }}>
-                    engineer@interior.com / password123
-                  </Typography>
-                </Box>
               </Box>
             </form>
           )}

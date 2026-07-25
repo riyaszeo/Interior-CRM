@@ -74,7 +74,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, s
 
   const activeBranch = userBranches.find((b: any) => String(b.id) === selectedBranchId);
   const activeBranchName = activeBranch ? activeBranch.name : null;
-  const sidebarDisplayName = activeBranchName || company?.name || 'Antigravity';
+  const sidebarDisplayName = activeBranchName || company?.name || 'Nexus ERP';
 
   const getAbbr = (name?: string) => {
     if (!name) return 'AG';
@@ -122,10 +122,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children, activeTab, s
 
   // Filter navigation items by user permissions
   const filteredNavItems = navItems.filter(item => {
-    if (item.value === 'branch_control' && user?.tenant_id !== 1) {
+    if (item.value === 'branch_control' && (user?.tenant_id !== 1 && user?.tenant_id !== null)) {
       return false;
     }
-    if (item.value === 'saas_admin' && (!roles.includes('Super Admin') || user?.tenant_id !== 1)) {
+    if (item.value === 'saas_admin' && (!roles.includes('Super Admin') || (user?.tenant_id !== 1 && user?.tenant_id !== null))) {
       return false;
     }
     if (!item.permission) return true;

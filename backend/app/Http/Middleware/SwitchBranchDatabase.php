@@ -103,55 +103,16 @@ class SwitchBranchDatabase
             }
 
             // Configure tenant connection details dynamically
-            $driver = env('DB_CONNECTION', 'sqlite');
-
-            if ($driver === 'sqlite') {
-                $dbPath = database_path('database_branch_' . $branch->id . '.sqlite');
-                if (!file_exists($dbPath)) {
-                    touch($dbPath);
-                }
-                Config::set('database.connections.tenant.driver', 'sqlite');
-                Config::set('database.connections.tenant.database', $dbPath);
-            } else {
-                // For MySQL/MariaDB or PGSQL
-                Config::set('database.connections.tenant.driver', $driver);
-                Config::set('database.connections.tenant.host', env('DB_HOST', '127.0.0.1'));
-                Config::set('database.connections.tenant.port', env('DB_PORT', '3306'));
-                Config::set('database.connections.tenant.database', env('DB_DATABASE', 'laravel') . '_branch_' . $branch->id);
-                Config::set('database.connections.tenant.username', env('DB_USERNAME', 'root'));
-                Config::set('database.connections.tenant.password', env('DB_PASSWORD', ''));
-                Config::set('database.connections.tenant.charset', 'utf8mb4');
-                Config::set('database.connections.tenant.collation', 'utf8mb4_unicode_ci');
-            }
-
-            Config::set('database.connections.tenant.foreign_key_constraints', false);
-
-            // Set tenant connection as the default
+            // In the new single-database architecture with tenant_id, we DO NOT switch databases per branch.
+            // All data resides in the central database and is isolated via TenantScope.
+            // We just ensure the 'tenant' connection points to the same database as 'mysql' / 'central'.
+            
+            $driver = env('DB_CONNECTION', 'mysql');
+            
+            Config::set('database.connections.tenant', Config::get('database.connections.' . $driver));
             Config::set('database.default', 'tenant');
             DB::purge('tenant');
             DB::reconnect('tenant');
-
-            try {
-                DB::connection('tenant')->statement('PRAGMA foreign_keys = OFF;');
-            } catch (\Exception $e) {}
-
-            // Bootstrapping: Auto run migrations if branch database is not initialized yet
-            try {
-                if (!Schema::connection('tenant')->hasTable('materials')) {
-                    Artisan::call('migrate', [
-                        '--database' => 'tenant',
-                        '--path' => 'database/migrations',
-                        '--force' => true,
-                    ]);
-                }
-            } catch (\Exception $e) {
-                // If migration fails (e.g. database not created/reachable for non-sqlite), catch and report
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to initialize branch database: ' . $e->getMessage(),
-                    'data' => null,
-                ], 500);
-            }
         }
 
         return $next($request);

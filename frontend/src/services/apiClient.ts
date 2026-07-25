@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.PROD ? 'https://api-erp.vksinteriorandexterior.com/api' : 'http://localhost:8000/api');
 
 class ApiClient {
   private getHeaders(): Record<string, string> {

@@ -23,7 +23,12 @@ return new class extends Migration
             'sessions',
             'tenants',
             'cache',
-            'cache_locks'
+            'cache_locks',
+            'roles',
+            'permissions',
+            'model_has_permissions',
+            'model_has_roles',
+            'role_has_permissions'
         ];
 
         foreach ($tables as $table) {
@@ -34,10 +39,14 @@ return new class extends Migration
             }
 
             if (!Schema::hasColumn($tableName, 'tenant_id')) {
-                Schema::table($tableName, function (Blueprint $table) {
-                    $table->unsignedBigInteger('tenant_id')->nullable()->after('id');
-                    $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
-                });
+                try {
+                    Schema::table($tableName, function (Blueprint $table) {
+                        $table->unsignedBigInteger('tenant_id')->nullable();
+                        $table->foreign('tenant_id')->references('id')->on('tenants')->onDelete('cascade');
+                    });
+                } catch (\Exception $e) {
+                    // Ignore errors for tables that can't be altered
+                }
             }
         }
     }
@@ -59,7 +68,12 @@ return new class extends Migration
             'sessions',
             'tenants',
             'cache',
-            'cache_locks'
+            'cache_locks',
+            'roles',
+            'permissions',
+            'model_has_permissions',
+            'model_has_roles',
+            'role_has_permissions'
         ];
 
         foreach ($tables as $table) {

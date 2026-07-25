@@ -80,7 +80,7 @@ export const DashboardPage: React.FC = () => {
           Error Retrieving Operational Metrics
         </Typography>
         <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
-          Please confirm that the Laravel Backend is serving requests.
+          Please confirm that the Backend API is serving requests.
         </Typography>
         <IconButton onClick={() => refetch()} sx={{ mt: 2, border: '1px solid', borderColor: 'divider' }}>
           <RefreshIcon />
