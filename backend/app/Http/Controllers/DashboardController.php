@@ -58,7 +58,7 @@ class DashboardController extends Controller
         
         $todayDispatches = MaterialDispatch::whereDate('dispatched_at', Carbon::today());
         $dispatchedTodayCount = $todayDispatches->count();
-        $dispatchedTodayCost = $todayDispatches->sum('cost');
+        $dispatchedTodayCost = $todayDispatches->sum('total_cost');
 
         $pendingQuotations = Quotation::where('status', 'pending')->count();
         $pendingInvoices = Invoice::where('status', 'pending')->count();
@@ -101,7 +101,7 @@ class DashboardController extends Controller
             // Monthly Material Consumption Cost
             $dispSum = MaterialDispatch::whereMonth('dispatched_at', $month->month)
                 ->whereYear('dispatched_at', $month->year)
-                ->sum('cost');
+                ->sum('total_cost');
             $materialConsumptionChart[] = [
                 'month' => $month->format('M'),
                 'amount' => (float) $dispSum
