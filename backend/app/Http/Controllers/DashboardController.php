@@ -131,7 +131,7 @@ class DashboardController extends Controller
         // Material Budget limits
         $projects = Project::select('id', 'name', 'material_budget')->get();
         $materialCostVsBudget = $projects->map(function ($project) {
-            $totalCost = MaterialDispatch::where('project_id', $project->id)->sum('cost');
+            $totalCost = MaterialDispatch::where('project_id', $project->id)->sum('total_cost');
             return [
                 'project_id' => $project->id,
                 'project_name' => $project->name,
