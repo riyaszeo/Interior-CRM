@@ -68,7 +68,7 @@ class DashboardController extends Controller
         $monthlyRevenue = Invoice::where('status', 'paid')
             ->whereMonth('paid_at', Carbon::now()->month)
             ->whereYear('paid_at', Carbon::now()->year)
-            ->sum('amount');
+            ->sum('total_amount');
 
         // 2. Chart datasets (Last 6 Months: Jan -> Jun)
         $revenueChart = [];
@@ -82,7 +82,7 @@ class DashboardController extends Controller
             $revSum = Invoice::where('status', 'paid')
                 ->whereMonth('paid_at', $month->month)
                 ->whereYear('paid_at', $month->year)
-                ->sum('amount');
+                ->sum('total_amount');
             $revenueChart[] = [
                 'month' => $month->format('M'),
                 'amount' => (float) $revSum
@@ -92,7 +92,7 @@ class DashboardController extends Controller
             $poSum = PurchaseOrder::whereIn('status', ['approved', 'received'])
                 ->whereMonth('created_at', $month->month)
                 ->whereYear('created_at', $month->year)
-                ->sum('amount');
+                ->sum('total_amount');
             $purchasesChart[] = [
                 'month' => $month->format('M'),
                 'amount' => (float) $poSum
@@ -164,9 +164,9 @@ class DashboardController extends Controller
         $recentQuotations = Quotation::latest()->limit(5)->get()->map(function ($quote) {
             return [
                 'id' => $quote->id,
-                'client_name' => $quote->client_name,
+                'client_name' => $quote->customer ? $quote->customer->name : 'N/A',
                 'title' => $quote->title,
-                'amount' => (float) $quote->amount,
+                'amount' => (float) $quote->total,
                 'status' => $quote->status,
                 'time' => $quote->created_at->diffForHumans()
             ];
@@ -178,7 +178,7 @@ class DashboardController extends Controller
                 'id' => $po->id,
                 'po_number' => $po->po_number,
                 'vendor_name' => $po->vendor_name,
-                'amount' => (float) $po->amount,
+                'amount' => (float) $po->total_amount,
                 'status' => $po->status,
                 'time' => $po->created_at->diffForHumans()
             ];
