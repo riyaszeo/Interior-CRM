@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('customers', function (Blueprint $table) {
+        if (!Schema::hasTable('customers')) {
+            Schema::create('customers', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('contact_name');
@@ -38,6 +39,7 @@ return new class extends Migration
         Schema::table('projects', function (Blueprint $table) {
             $table->foreignId('customer_id')->nullable()->constrained()->onDelete('set null');
         });
+        }
     }
 
     /**
